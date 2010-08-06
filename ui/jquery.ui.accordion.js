@@ -311,13 +311,7 @@ $.widget( "ui.accordion", {
 			if ( !options.collapsible ) {
 				return;
 			}
-			this.active
-				.removeClass( "ui-state-active ui-corner-top" )
-				.addClass( "ui-state-default ui-corner-all" )
-				.children( ".ui-icon" )
-					.removeClass( options.icons.headerSelected )
-					.addClass( options.icons.header );
-			this.active.next().addClass( "ui-accordion-content-active" );
+			// **CHANGE** Moved the class switch to the if statement below
 			var toHide = this.active.next(),
 				data = {
 					options: options,
@@ -327,7 +321,16 @@ $.widget( "ui.accordion", {
 					oldContent: toHide
 				},
 				toShow = ( this.active = $( [] ) );
-			this._toggle( toShow, toHide, data );
+			// **CHANGE** _toggle now returns a boolean
+			if(this._toggle( toShow, toHide, data )){				
+				this.active
+				.removeClass( "ui-state-active ui-corner-top" )
+				.addClass( "ui-state-default ui-corner-all" )
+				.children( ".ui-icon" )
+					.removeClass( options.icons.headerSelected )
+					.addClass( options.icons.header );
+				this.active.next().addClass( "ui-accordion-content-active" );
+			}
 			return;
 		}
 
@@ -346,24 +349,8 @@ $.widget( "ui.accordion", {
 			return;
 		}
 
-		// switch classes
-		this.active
-			.removeClass( "ui-state-active ui-corner-top" )
-			.addClass( "ui-state-default ui-corner-all" )
-			.children( ".ui-icon" )
-				.removeClass( options.icons.headerSelected )
-				.addClass( options.icons.header );
-		if ( !clickedIsActive ) {
-			clicked
-				.removeClass( "ui-state-default ui-corner-all" )
-				.addClass( "ui-state-active ui-corner-top" )
-				.children( ".ui-icon" )
-					.removeClass( options.icons.header )
-					.addClass( options.icons.headerSelected );
-			clicked
-				.next()
-				.addClass( "ui-accordion-content-active" );
-		}
+		// **CHANGE** moved switch classes to if statement below
+		
 
 		// find elements to show and hide
 		var toShow = clicked.next(),
@@ -376,17 +363,41 @@ $.widget( "ui.accordion", {
 				oldContent: toHide
 			},
 			down = this.headers.index( this.active[0] ) > this.headers.index( clicked[0] );
-
-		this.active = clickedIsActive ? $([]) : clicked;
-		this._toggle( toShow, toHide, data, clickedIsActive, down );
+		// **CHANGE** _toggle now returns a boolean
+		// **CHANGE** moved setting this.active = clickedIsActive ? $([]) : clicked; to inside the if statement
+		if(this._toggle( toShow, toHide, data, clickedIsActive, down )){
+			this.active = clickedIsActive ? $([]) : clicked;
+			this.active
+			.removeClass( "ui-state-active ui-corner-top" )
+			.addClass( "ui-state-default ui-corner-all" )
+			.children( ".ui-icon" )
+				.removeClass( options.icons.headerSelected )
+				.addClass( options.icons.header );
+			if ( !clickedIsActive ) {
+				clicked
+					.removeClass( "ui-state-default ui-corner-all" )
+					.addClass( "ui-state-active ui-corner-top" )
+					.children( ".ui-icon" )
+						.removeClass( options.icons.header )
+						.addClass( options.icons.headerSelected );
+				clicked
+					.next()
+					.addClass( "ui-accordion-content-active" );
+			}
+		}
 
 		return;
 	},
-
+	
 	_toggle: function( toShow, toHide, data, clickedIsActive, down ) {
 		var self = this,
 			options = self.options;
-
+		
+		// **CHANGE** _toggle now returns a boolean
+		// **CHANGE** moved the trigger changestart event		
+		// **CHANGE** if event.IsPreventDefaulted then return false
+		if (self._trigger( "changestart", null, data ))	return false;
+		
 		self.toShow = toShow;
 		self.toHide = toHide;
 		self.data = data;
@@ -397,9 +408,6 @@ $.widget( "ui.accordion", {
 			}
 			return self._completed.apply( self, arguments );
 		};
-
-		// trigger changestart event
-		self._trigger( "changestart", null, self.data );
 
 		// count elements to animate
 		self.running = toHide.size() === 0 ? toShow.size() : toHide.size();
@@ -482,6 +490,9 @@ $.widget( "ui.accordion", {
 				tabIndex: 0
 			})
 			.focus();
+			
+		// **CHANGE**  return true so conditions fire correctly.
+		return true;
 	},
 
 	_completed: function( cancel ) {
